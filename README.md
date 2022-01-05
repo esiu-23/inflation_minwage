@@ -1,4 +1,5 @@
-# inflation_minwage: Project looking at whether minimum wage has kept up with inflation. Script can take as input any state(s) in the USA, plotted CA, NY, IL as initial analysis.
+# inflation_minwage: 
+Project looking at whether minimum wage has kept up with inflation. Script can take as input any state(s) in the USA, plotted CA, NY, IL as initial analysis.
 
 CPI-U.csv : National CPI data from Bureau of Labor Statistics, from 1980-2020
 
