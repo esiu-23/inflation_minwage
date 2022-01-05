@@ -1,7 +1,9 @@
 '''
 For urban areas in the Western US: 
 -Does min. wage track inflation over time? 
+    Yes, it appears to for NY, IL, and CA
 -Which state has the best min. wage? 
+    In 2021, CA has the highest minimum wage
 
 EVELYN SIU
 '''
@@ -12,7 +14,7 @@ import matplotlib.pyplot as plt
 
 def clean_data(minwage_df, cpi_df):
 
-### Test Data:  "Minimum Wage Data.csv", "West CPI-U.csv"
+### Data Used:  "Minimum_Wage_Data.csv", "CPI-U.csv"
 
     minwage = pd.read_csv(minwage_df)
     cpi = pd.read_csv(cpi_df)
@@ -28,7 +30,7 @@ def clean_data(minwage_df, cpi_df):
 
     cpi= cpi.rename(columns={cpi.columns[0]:"Year"})
     cpi= cpi.astype({"Year":int})
-    cpi= cpi.rename(columns={cpi.columns[13]:"Annual"})
+    cpi["Annual"] = cpi.mean(axis = 1)
 
     # Merge inflation & minimum wage datasets by year, by state
     full_df = pd.merge(minwage, cpi, on = "Year", how="left")
@@ -36,38 +38,40 @@ def clean_data(minwage_df, cpi_df):
     # Data for CPI only starts from 1980, remove all instances before that
     full_df = full_df [ full_df["Year"] >= 1980]
 
-    print(full_df)
     # Save cleaned CSV for future use
-    # full_df.to_csv("minwage_{cpi_name}".format(minwage_name = minwage_df, cpi_name = cpi_df))
+    full_df.to_csv("minwage_{cpi_name}".format(minwage_name = minwage_df, cpi_name = cpi_df))
+
+    return full_df
+    
 
 def calculate_annual_increases(full_df):
     unique_states = len(full_df["State"].unique())
     full_state = full_df.set_index("State")
-    full_state["min wage rate increase"] = full_state["State.Minimum.Wage"].pct_change(periods = unique_states)
+    #full_state["min wage rate increase"] = full_state["State.Minimum.Wage"].pct_change(periods = unique_states)
     full_state["annual cpi increase"] = full_state["Annual"].pct_change(periods = unique_states)
 
-def graph_minwage_by_cpi(full_state, state):
+    return full_state
+
+def state_level_analyses(full_state, state):
     state_name = (full_state.loc[state])
     state_name["min wage keep up with inflation"] = state_name["State.Minimum.Wage"]
     state_name["min wage keep up with inflation"] = (state_name["min wage keep up with inflation"] * (1 + state_name["annual cpi increase"])).shift(1)
     state_name["min wage rate change"] = state_name["min wage keep up with inflation"].pct_change()
     
     return state_name
-    #state_name.plot(x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", title = state)
 
-states = ["California", "New York", "Illinois"]
 
-#for state in states:
-#    ax = graph_min_wage_by_cpi(full_state, state).plot(x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", labels = state)
-#    plt.show()
+# Graphing 3 states: California, New York, and Illinois
+full_df = clean_data("Minimum_Wage_Data.csv", "CPI-U.csv")
+full_state = calculate_annual_increases(full_df)
 
-ax = im.graph_minwage_by_cpi(full_state, "California").plot(label = ["California - min wage", "California - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#76EE00", "#458B00"])
-im.graph_minwage_by_cpi(full_state, "Illinois").plot(ax=ax, label = ["Illinois - min wage", "Illinois - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#98F5FF", "#53868B"])
-im.graph_minwage_by_cpi(full_state, "New York").plot(ax=ax, label = ["New York - min wage", "New York - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#FF7256", "#CD3333"])
+ax = state_level_analyses(full_state, "California").plot(label = ["California - min wage", "California - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#76EE00", "#458B00"])
+state_level_analyses(full_state, "Illinois").plot(ax=ax, label = ["Illinois - min wage", "Illinois - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#98F5FF", "#53868B"])
+state_level_analyses(full_state, "New York").plot(ax=ax, label = ["New York - min wage", "New York - inflation-adj. min wage"], x = "Year", y=["State.Minimum.Wage", "min wage keep up with inflation"], kind="line", color = ["#FF7256", "#CD3333"])
 ax.set_title("Minimum Wage in 3 States")
 ax.set_ylabel("Minimum Wage ($)")
 plt.show()
-#ax.legend = (["California - min age", "California - min wage kept up with inflation", "Illinois - min age", "Illinois - min wage kept up with inflation", "New York - min age", "New York - min wage kept up with inflation"]);
+
 
 
 
